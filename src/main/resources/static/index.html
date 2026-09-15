@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data Lifecycle Policy Enforcer</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<header><div><span class="eyebrow">POSTGRESQL WORKSPACE</span><h1>Data Lifecycle Policy Enforcer</h1></div><span class="badge">Dry-run only</span></header>
+<p class="intro">Explore your databases and plan retention, archiving, and partition removal. Every action is a preview.</p>
+<div id="message" role="status" aria-live="polite"></div>
+<main>
+  <section aria-labelledby="databases-title">
+    <div class="section-head"><h2 id="databases-title">Databases</h2><button id="refresh">Refresh</button></div>
+    <div id="databases" class="cards"></div>
+    <details id="database-editor"><summary>Configure a database</summary>
+      <form id="database-form">
+        <input name="id" type="hidden">
+        <label>Display name<input name="name" required maxlength="200"></label>
+        <label>Host<input name="host" required placeholder="db.example.com" maxlength="253"></label>
+        <label>Port<input name="port" type="number" min="1" max="65535" value="5432" required></label>
+        <label>Database<input name="database" required maxlength="200"></label>
+        <label>Username<input name="username" required autocomplete="off" maxlength="200"></label>
+        <label>Password<input name="password" type="password" required autocomplete="new-password" maxlength="4096"></label>
+        <label>SSL mode<select name="sslMode"><option>verify-full</option><option>verify-ca</option><option>require</option><option>prefer</option><option>allow</option><option>disable</option></select></label>
+        <p class="form-note">Use a read-only database account. Re-enter credentials when editing; credentials are never shown.</p>
+        <div class="form-actions"><button type="submit">Save database</button><button type="button" id="reset-database">New database</button></div>
+      </form>
+    </details>
+  </section>
+  <section aria-labelledby="structure-title">
+    <h2 id="structure-title">Database structure</h2>
+    <p id="selected-database">Select a database to browse.</p>
+    <label>Schema<select id="schema" disabled><option value="">Select a database first</option></select></label>
+    <div id="tables" class="table-wrap"></div>
+    <div id="table-details"><p class="empty">Select a table to see columns, indexes, and partitions.</p></div>
+  </section>
+  <section aria-labelledby="policies-title">
+    <div class="section-head"><h2 id="policies-title">Lifecycle policies</h2><button id="new-policy">New policy</button></div>
+    <div id="policies" class="cards"></div>
+    <details id="policy-editor"><summary>Create or edit a policy</summary>
+      <form id="policy-form">
+        <input name="id" type="hidden">
+        <label>Policy name<input name="name" required maxlength="200"></label>
+        <label>Retention (days)<input name="retentionDays" type="number" min="1" placeholder="90"></label>
+        <label>Partition strategy<select name="partitionStrategy"><option>NONE</option><option>RANGE</option></select></label>
+        <label>Partition interval (days)<input name="partitionIntervalDays" type="number" min="1" placeholder="1"></label>
+        <label class="check"><input name="archiveEnabled" type="checkbox">Plan archiving</label>
+        <label>Archive after (days)<input name="archiveAfterDays" type="number" min="1" placeholder="30"></label>
+        <label class="check"><input name="deleteEnabled" type="checkbox">Plan removal</label>
+        <label>Delete after (days)<input name="deleteAfterDays" type="number" min="1" placeholder="Defaults to retention"></label>
+        <label>Target object storage<input name="targetObjectStorage" maxlength="500" placeholder="s3://bucket/prefix"></label>
+        <label>Schedule (UTC, six-field cron)<input name="executionSchedule" maxlength="100" placeholder="0 0 2 * * *"></label>
+        <p class="form-note">Dry-run is always enabled. Schedules run only when the service scheduler is enabled. Partition interval and storage are saved for future execution.</p>
+        <div class="form-actions"><button type="submit">Save policy</button></div>
+      </form>
+    </details>
+  </section>
+  <section aria-labelledby="assignments-title">
+    <h2 id="assignments-title">Policy assignments</h2>
+    <form id="assignment-form">
+      <label>Policy<select name="policyId" id="assignment-policy" required><option value="">Select a policy</option></select></label>
+      <label>Database<select name="databaseId" id="assignment-database" required><option value="">Select a database</option></select></label>
+      <label>Schema<input name="schemaName" id="assignment-schema" required maxlength="63" placeholder="telemetry"></label>
+      <label>Table<input name="tableName" id="assignment-table" required maxlength="63" placeholder="events"></label>
+      <div class="form-actions"><button type="submit">Assign policy</button></div>
+    </form>
+    <p class="muted">Browsing a table fills in its database, schema, and table. Each table can have one policy.</p>
+    <div id="assignments" class="table-wrap"></div>
+  </section>
+  <section class="full" aria-labelledby="plan-title">
+    <h2 id="plan-title">Dry-run execution plan</h2>
+    <p class="muted">Run a policy from the policy list. Age is measured from each partition’s exclusive upper bound in UTC.</p>
+    <div id="plan"><p class="empty">No preview yet.</p></div>
+  </section>
+</main>
+<footer>Data Lifecycle Policy Enforcer · <a href="/swagger-ui/index.html">API documentation</a></footer>
+</body>
+</html>
+
